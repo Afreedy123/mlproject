@@ -1,5 +1,5 @@
-import sys
 import os
+import sys
 from dataclasses import dataclass
 
 import numpy as np
@@ -28,13 +28,8 @@ class DataTransformation:
         self.data_transformation_config = DataTransformationConfig()
 
     def get_data_transformer_object(self):
-        """
-        This function is responsible for data transformation
-        """
-
         try:
 
-            # Target column is removed later, so DO NOT include math score here
             numerical_columns = [
                 "reading score",
                 "writing score"
@@ -63,11 +58,11 @@ class DataTransformation:
                 ]
             )
 
-            logging.info(f"Numerical Columns: {numerical_columns}")
-            logging.info(f"Categorical Columns: {categorical_columns}")
+            logging.info("Numerical Columns: %s", numerical_columns)
+            logging.info("Categorical Columns: %s", categorical_columns)
 
             preprocessor = ColumnTransformer(
-                transformers=[
+                [
                     ("num_pipeline", num_pipeline, numerical_columns),
                     ("cat_pipeline", cat_pipeline, categorical_columns)
                 ]
@@ -85,32 +80,28 @@ class DataTransformation:
             train_df = pd.read_csv(train_path)
             test_df = pd.read_csv(test_path)
 
-            print("Train Columns:", train_df.columns.tolist())
-            print("Test Columns :", test_df.columns.tolist())
-
-            logging.info("Read train and test data completed")
-
-            preprocessing_obj = self.get_data_transformer_object()
+            print("\nTrain Columns :", train_df.columns.tolist())
+            print("Test Columns  :", test_df.columns.tolist())
 
             target_column_name = "math score"
 
-            input_feature_train_df = train_df.drop(
-                columns=[target_column_name],
-                axis=1
-            )
+            preprocessing_obj = self.get_data_transformer_object()
 
+            # ==========================
+            # FIXED FOR NEW PANDAS
+            # ==========================
+
+            input_feature_train_df = train_df.drop(columns=[target_column_name])
             target_feature_train_df = train_df[target_column_name]
 
-            input_feature_test_df = test_df.drop(
-                columns=[target_column_name],
-                axis=1
-            )
-
+            input_feature_test_df = test_df.drop(columns=[target_column_name])
             target_feature_test_df = test_df[target_column_name]
 
-            logging.info(
-                "Applying preprocessing object on training and testing dataframe."
-            )
+            print("\nTraining Feature Columns")
+            print(input_feature_train_df.columns.tolist())
+
+            print("\nTesting Feature Columns")
+            print(input_feature_test_df.columns.tolist())
 
             input_feature_train_arr = preprocessing_obj.fit_transform(
                 input_feature_train_df
@@ -130,12 +121,12 @@ class DataTransformation:
                 np.array(target_feature_test_df)
             ]
 
-            logging.info("Saving preprocessing object.")
-
             save_object(
                 file_path=self.data_transformation_config.preprocessor_obj_file_path,
                 obj=preprocessing_obj
             )
+
+            print("\nPreprocessor Saved Successfully")
 
             return (
                 train_arr,
@@ -144,4 +135,6 @@ class DataTransformation:
             )
 
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             raise CustomException(e, sys)
